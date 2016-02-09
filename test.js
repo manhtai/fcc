@@ -13,6 +13,7 @@ suite('Timestamp Microservice Tests', function(){
 
     var result = {"unix":1450137600, "natural":"December 15, 2015"};
     var null_result = {"unix":null, "natural":null};
+
     test('should be able to convert natural date', function(done){
         request(server)
         .get('/timestamp/December 15, 2015')
@@ -29,5 +30,11 @@ suite('Timestamp Microservice Tests', function(){
         request(server)
         .get('/timestamp/foo')
         .expect(200, null_result, done);
+    });
+
+    test('should display intro', function(done){
+        request(server)
+        .get('/timestamp')
+        .expect(200, done);
     });
 });

@@ -3,7 +3,12 @@ var strf = require('strftime');
 var app = express();
 app.set('port', process.env.PORT || 3000);
 
-// home page
+// TimeStamp Microservice
+app.get('/timestamp/', function(req, res){
+    res.type('text/plain');
+    res.send('Please visit /timestamp/1450137600 or /timestamp/December 15, 2015.');
+});
+
 app.get('/timestamp/:param', function(req, res){
     var param = req.params.param;
     var date;
