@@ -9,7 +9,7 @@ var opts = {
 
 switch(process.env.NODE_ENV){
     case 'production':
-        mongoose.connect(FIXME, opts);
+        mongoose.connect(process.env.MONGOLAB_URI, opts);
         break;
     default:
         mongoose.connect("mongodb://localhost:27017/test", opts);

@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/manhtai/fcc.svg?branch=master)](https://travis-ci.org/manhtai/fcc)
+
 Code of some FreeCodeCamp's projects of mine.
 
 - [Timestamp Microservice][1]
