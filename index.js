@@ -1,9 +1,11 @@
 var express = require('express');
 var strf = require('strftime');
 var app = express();
+var parser = require('ua-parser-js');
+
 app.set('port', process.env.PORT || 3000);
 
-// TimeStamp Microservice
+// Timestamp Microservice
 app.get('/timestamp/', function(req, res){
     res.type('text/plain');
     res.send('Please visit /timestamp/1450137600 or /timestamp/December 15, 2015.');
@@ -24,6 +26,18 @@ app.get('/timestamp/:param', function(req, res){
         "natural": date ? strf("%B %d, %Y", date) : null
     };
     res.type('application/json');
+    res.send(JSON.stringify(result));
+});
+
+// Request Header Parser Microservice
+app.get('/whoyouare', function(req, res){
+    var ua = parser(req.get('User-Agent'));
+    res.type('application/json');
+    var result = {
+        "ipaddress": req.ip,
+        "language": req.get('Accept-Language').split(',')[0],
+        "software": ua.os.name
+    };
     res.send(JSON.stringify(result));
 });
 
