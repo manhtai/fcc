@@ -2,6 +2,9 @@ var express = require('express');
 var strf = require('strftime');
 var app = express();
 var parser = require('ua-parser-js');
+var validUrl = require('valid-url');
+var randomstring = require('randomstring');
+var Url = require('./mongo');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -39,6 +42,58 @@ app.get('/whoyouare', function(req, res){
         "software": ua.os.name
     };
     res.send(JSON.stringify(result));
+});
+
+// Url Shorterner Microservice
+app.get('/url/new/*', function(req, res, next){
+    var original_url = req.path.slice('/url/new/'.length);
+    var result, short_url;
+    res.type('application/json');
+    if (validUrl.isUri(original_url)) {
+        // Url existed
+        Url.findOne({"original_url": original_url}, function(err, url){
+            if (url) {
+                result = {
+                    "original_url": url.original_url,
+                    "short_url": url.short_url
+                };
+            } else {
+                // New url
+                // FIXME: Overwritting are allowed!
+                short_url = randomstring.generate(3);
+                result = {
+                    "original_url": original_url,
+                    "short_url": short_url
+                };
+                // Save to database
+                Url(result).save();
+            }
+            res.send(JSON.stringify(result));
+        });
+    } else {
+        result = {
+            "error": "Invalid url"
+        };
+        res.send(JSON.stringify(result));
+    }
+});
+
+app.get('/url/', function(req, res){
+    res.type('text/plain');
+    res.send('Use /new/http://foo.com to create a new url.');
+});
+
+app.get('/url/:url', function(req, res){
+    var short_url = req.params.url;
+    var original_url;
+    Url.findOne({"short_url": short_url}, function(err, url){
+        if (url) {
+            original_url = url.original_url;
+            res.redirect(301, original_url);
+        } else {
+            res.redirect(301, '/url/');
+        }
+    });
 });
 
 // custom 404 page

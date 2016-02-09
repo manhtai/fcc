@@ -1,4 +1,5 @@
 var request = require('supertest');
+var mongoose = require('mongoose');
 
 suite('FCC Tests', function(){
     var server;
@@ -52,4 +53,62 @@ suite('FCC Tests', function(){
         .set('User-Agent', 'Ubuntu')
         .expect(200, whoyouare, done);
     });
+});
+
+
+suite('Url Shortern Tests', function(){
+    var server;
+    suiteSetup(function (done) {
+        // Flush cache
+        delete require.cache[require.resolve('./index')];
+        server = require('./index');
+
+        function clearDB() {
+            for (var i in mongoose.connection.collections) {
+            mongoose.connection.collections[i].remove(function() {});
+            }
+            return done();
+        }
+
+        if (mongoose.connection.readyState === 0) {
+            mongoose.connect(config.db.test, function (err) {
+            if (err) {
+                throw err;
+            }
+            return clearDB();
+            });
+        } else {
+            return clearDB();
+        }
+    });
+    suiteTeardown(function (done) {
+        server.close(done);
+    });
+
+    var url_short = {
+        "original_url": "http://foo.com",
+        "short_url": ""
+    };
+
+    test('should display url shortener home page', function(done) {
+        request(server)
+        .get('/url/')
+        .expect(200, done);
+    });
+
+    test('should return short url', function(done) {
+        request(server)
+        .get('/url/new/' + url_short.original_url)
+        .expect(function(res){
+            url_short.short_url = res.body.short_url;
+        })
+        .expect(200, url_short, done);
+    });
+
+    test('should redirect to original url', function(done) {
+        request(server)
+        .get('/url/' + url_short.short_url)
+        .expect('Location', url_short.original_url, done);
+    });
+
 });
