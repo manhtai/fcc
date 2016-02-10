@@ -62,8 +62,28 @@ suite('Url Shortern Tests', function(){
         // Flush cache
         delete require.cache[require.resolve('./index')];
         server = require('./index');
+
+        // Clear MongoDB
+        function clearDB() {
+            for (var i in mongoose.connection.collections) {
+            mongoose.connection.collections[i].remove(function() {});
+            }
+            return done();
+        }
+
+        if (mongoose.connection.readyState === 0) {
+            mongoose.connect("mongodb://localhost:27017/test", function (err) {
+            if (err) {
+                throw err;
+            }
+            return clearDB();
+            });
+        } else {
+            return clearDB();
+        }
     });
     suiteTeardown(function (done) {
+        mongoose.disconnect();
         server.close(done);
     });
 
