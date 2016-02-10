@@ -60,6 +60,24 @@ suite('FCC Tests', function(){
         .get('/search/')
         .expect(200, done);
     });
+
+    // Upload test
+    test('should display upload file homepage', function(done){
+        request(server)
+        .get('/file/')
+        .expect(200, done);
+    });
+
+    var procfile = {
+        "name": "Procfile",
+        "filesize": 19
+    };
+    test('should allow upload file', function(done){
+        request(server)
+        .post('/file/upload/')
+        .attach('file', './Procfile')
+        .expect(200, procfile, done);
+    });
 });
 
 

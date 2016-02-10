@@ -1,13 +1,15 @@
 var express = require('express');
 var strf = require('strftime');
-var app = express();
 var parser = require('ua-parser-js');
 var validUrl = require('valid-url');
 var randomstring = require('randomstring');
 var Url = require('./mongo').Url;
 var Search = require('./mongo').Search;
 var request = require('request');
+var multer  = require('multer');
+var upload = multer();
 
+var app = express();
 app.set('port', process.env.PORT || 3000);
 
 // Timestamp Microservice
@@ -153,6 +155,21 @@ app.get('/search/latest/', function(req, res){
         });
         res.send(JSON.stringify(result));
     });
+});
+
+// File Metadata Microservice
+app.get('/file/', function(req, res){
+    res.type('text/plain');
+    res.send('Send a POST request to `/file/upload/` to analyze file.');
+});
+
+app.post('/file/upload/', upload.single('file'), function (req, res, next){
+    res.type('application/json');
+    var result = {
+        "name": req.file.originalname,
+        "filesize": req.file.size
+    };
+    res.send(JSON.stringify(result));
 });
 
 // custom 404 page
