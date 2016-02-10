@@ -4,7 +4,9 @@ var app = express();
 var parser = require('ua-parser-js');
 var validUrl = require('valid-url');
 var randomstring = require('randomstring');
-var Url = require('./mongo');
+var Url = require('./mongo').Url;
+var Search = require('./mongo').Search;
+var request = require('request');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -93,6 +95,63 @@ app.get('/url/:url', function(req, res){
         } else {
             res.redirect(301, '/url/');
         }
+    });
+});
+
+// Image search
+app.get('/search/', function(req, res){
+    res.type('text/plain');
+    res.send('Use `/search/image/funny cats` to create a new url\n' +
+             'and `/search/latest/` to list latest searches.');
+});
+
+app.get('/search/image/:terms', function(req, res){
+    res.type('application/json');
+    var offset = parseInt(req.query.offset);
+    offset = offset > 1 ? offset : 1;
+    var query = encodeURIComponent("'" + req.params.terms + "'");
+    var acctKey = process.env.BING_AUTH_KEY;
+    var auth = Buffer(acctKey + ':' + acctKey).toString('base64');
+    var rootUri = 'https://api.datamarket.azure.com/Bing/Search/Image';
+    var requestUri = rootUri + '?$format=json&Query=' + query + '&$skip=' + 50*offset;
+    var options = {
+        url: requestUri,
+        headers: {"Authorization": "Basic " + auth}
+    };
+    // Save query term to database
+    Search({'term': query, 'date': new Date()}).save();
+    // Callback function to display result
+    function callback(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var list = [], obj;
+            var result = JSON.parse(body).d.results;
+            result.forEach(function(r){
+                obj = {
+                    "url": r.MediaUrl,
+                    "snippet": r.Title,
+                    "thumbnail": r.Thumbnail.MediaUrl,
+                    "context": r.SourceUrl
+                };
+                list.push(obj);
+            });
+            res.send(JSON.stringify(list));
+        } else {
+            res.send('{"error": "Bing server error!"}');
+        }
+    }
+    request.post(options, callback);
+});
+
+app.get('/search/latest/', function(req, res){
+    res.type('application/json');
+    var limit = parseInt(req.query.limit);
+    limit = limit < 100 ? limit : 10;
+    Search.find({}).sort('-date').limit(limit).exec(function(err, searches){
+        var result = [];
+        searches.forEach(function(s) {
+            result.push({'term': s.term, 'when': s.date});
+        });
+        res.send(JSON.stringify(result));
     });
 });
 

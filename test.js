@@ -53,6 +53,13 @@ suite('FCC Tests', function(){
         .set('User-Agent', 'Ubuntu')
         .expect(200, whoyouare, done);
     });
+
+    // Search test
+    test('should display search homepage', function(done){
+        request(server)
+        .get('/search/')
+        .expect(200, done);
+    });
 });
 
 

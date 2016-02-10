@@ -15,6 +15,7 @@ switch(process.env.NODE_ENV){
         mongoose.connect("mongodb://localhost:27017/test", opts);
 }
 
+// Url shortener model
 var urlSchema = mongoose.Schema({
     original_url: String,
     short_url: String
@@ -22,4 +23,12 @@ var urlSchema = mongoose.Schema({
 
 var Url = mongoose.model('Url', urlSchema);
 
-module.exports = Url;
+// Image search model
+var searchSchema = mongoose.Schema({
+    term: String,
+    date: Date
+});
+
+var Search = mongoose.model('Search', searchSchema);
+
+module.exports = {Url: Url, Search: Search};
