@@ -11,8 +11,9 @@ switch(process.env.NODE_ENV){
     case 'production':
         mongoose.connect(process.env.MONGOLAB_URI, opts);
         break;
-    default:
+    case 'development':
         mongoose.connect("mongodb://localhost:27017/test", opts);
+        break;
 }
 
 // Url shortener model

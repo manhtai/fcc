@@ -1,5 +1,6 @@
 var request = require('supertest');
 var mongoose = require('mongoose');
+process.env.NODE_ENV = 'development';
 
 suite('FCC Tests', function(){
     var server;
