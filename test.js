@@ -13,6 +13,12 @@ suite('FCC Tests', function(){
         server.close(done);
     });
 
+    test('should had a home page', function(done){
+        request(server)
+        .get('/')
+        .expect(200, done);
+    });
+
     // Timestamp tests
     var timestamp = {"unix":1450137600, "natural":"December 15, 2015"};
     var null_timestamp = {"unix":null, "natural":null};

@@ -12,6 +12,12 @@ var upload = multer();
 var app = express();
 app.set('port', process.env.PORT || 3000);
 
+// Homepage
+app.get('/', function(req, res){
+    res.type('text/plain');
+    res.send('Please visit https://github.com/manhtai/fcc for more information.');
+});
+
 // Timestamp Microservice
 app.get('/timestamp/', function(req, res){
     res.type('text/plain');
