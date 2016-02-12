@@ -257,15 +257,18 @@ app.post('/signup', function(req, res){
                 password: passwordHash
             };
             // Create new user
-            User.create(newUser, function (err, user) {
-                if (!err) {
-                    // Log in immediatetly
-                    req.logIn(user, function (err) {
-                        if (err) res.redirect('/signup');
-                        else return res.redirect('/account');
+            User.count({username: newUser.username}, function(err, count) {
+                if (err || count) res.redirect('/signup');
+                else User.create(newUser, function (err, user) {
+                        if (!err) {
+                            // Log in immediatetly
+                            req.logIn(user, function (err) {
+                                if (err) res.redirect('/signup');
+                                else return res.redirect('/account');
+                            });
+                        }
+                        else res.redirect('/signup');
                     });
-                }
-                else res.redirect('/signup');
             });
         });
     }
