@@ -429,7 +429,8 @@ app.post('/item/:id/edit', ensureLogin, function (req, res) {
 
 // Vote item
 app.post('/item/:id/vote', function (req, res) {
-    var unique = req.user && req.user.username || req.ip;
+    var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    var unique = req.user && req.user.username || ip;
     Item.findOne({_id: req.params.id}, function (err, item) {
         if (err || !item)
             res.redirect('/poll/');
