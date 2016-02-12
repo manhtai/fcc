@@ -4,6 +4,7 @@ var User = require('./mongo').User;
 var assert = require('chai').assert;
 var config = require('./config');
 var bcrypt = require('bcrypt');
+var _ = require('underscore');
 
 process.env.NODE_ENV = 'test';
 
@@ -300,9 +301,8 @@ suite('Authentication tests', function(){
         request(server)
         .post(baseUrl)
         .send(u)
-        .expect(302, done);
-        // FIXME: This should pass
-        // .expect('Location', '/', done);
+        .expect(302)
+        .expect('Location', '/', done);
     });
 
     test('should redirect to "/login" if authentication fails', function (done) {
@@ -312,10 +312,11 @@ suite('Authentication tests', function(){
         };
         User.addUser(u);
         // Fake new password
-        // u.password = "fakepassword";
+        var fu = _.clone(u);
+        fu.password = "fakepassword";
         request(server)
         .post(baseUrl)
-        .send(u)
+        .send(fu)
         .expect(302)
         .expect('Location', '/login', done);
     });
