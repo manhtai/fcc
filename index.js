@@ -7,6 +7,9 @@ var randomstring = require('randomstring');
 var Url = require('./mongo').Url;
 var Search = require('./mongo').Search;
 var User = require('./mongo').User;
+var Poll = require('./mongo').Poll;
+var Item = require('./mongo').Item;
+var Vote = require('./mongo').Vote;
 var request = require('request');
 var multer  = require('multer');
 var upload = multer();
@@ -293,6 +296,162 @@ app.get('/logout', function(req, res) {
     req.logout();
     res.redirect('/');
 });
+
+// Polls app
+// All polls
+app.get('/poll', function (req, res) {
+    Poll.find(function (err, polls) {
+        res.render('polls', { polls: polls });
+    });
+});
+
+
+// Create poll
+app.get('/poll/new', ensureLogin, function (req, res) {
+    res.render('newpoll');
+});
+
+app.post('/poll/new', ensureLogin, function (req, res) {
+    var newPoll = {
+        title: req.body.title,
+        user: req.user.username
+    };
+    Poll.create(newPoll, function (err, poll) {
+        if (err) res.render('newpoll');
+        else res.redirect('/poll/' + poll.id);
+    });
+});
+
+// List of my polls
+app.get('/poll/:username', function (req, res) {
+    User.findOne({username: req.params.username}, function (err, user) {
+        if (err || !user) res.redirect('/poll');
+        else Poll.find({"user": user.username}, function (err, polls) {
+            if (err || !polls) res.redirect('/poll');
+            else res.render('polls', { polls: polls, user: user });
+        });
+    });
+});
+
+// A poll
+app.get('/poll/:username/:id', function (req, res) {
+    var username = req.params.username;
+    var owner = req.user && username == req.user.username;
+    User.findOne({username: username}, function (err, user) {
+        if (err || !user) res.redirect('/poll');
+        else Poll.findOne({_id: req.params.id}, function (err, poll) {
+            if (err || !poll) res.redirect('/poll/' + user.username);
+            else Item.find({poll : poll.id},
+                            function (err, items) {
+                res.render('poll',
+                            { poll: poll, items: items, owner: owner });
+            });
+        });
+    });
+});
+
+// Update poll title
+app.post('/poll/:username/:id', ensureLogin, function (req, res) {
+    var username = req.params.username;
+    if (username != req.params.username) res.redirect('/poll/' + username);
+    else Poll.findOne({_id: req.params.id},
+                      function (err, poll) {
+                        if (err || !poll)
+                            res.redirect('/poll/' + username);
+                        else {
+                            poll.title = req.body.title;
+                            poll.save();
+                            res.redirect('/poll/' + username + '/' + poll.id);
+                        }
+    });
+});
+
+// Add new poll item
+app.get('/poll/:username/:id/add', ensureLogin, function (req, res) {
+    var username = req.params.username;
+    if (username != req.user.username) res.redirect('/poll/' + username);
+    else Poll.findOne({_id: req.params.id},
+                      function (err, poll) {
+                            if (err || !poll)
+                                res.redirect('/poll/' + username);
+                            else res.render('newitem', { poll: poll });
+                      });
+});
+
+app.post('/poll/:username/:id/add', ensureLogin, function (req, res) {
+    var username = req.params.username;
+    if (username != req.user.username) res.redirect('/poll/' + username);
+    else Poll.findOne({_id: req.params.id}, function (err, poll) {
+        if (err || !poll)
+            res.redirect('/poll/' + username);
+        else Item.create({
+                title: req.body.title,
+                poll: poll.id,
+                user: username
+            }, function (err, item) {
+                if (!err) {
+                    if (poll.items) poll.items.push(item);
+                    else poll.items = [item];
+                    poll.save();
+                }
+                res.redirect('/poll/' + username + '/' + poll.id);
+            });
+    });
+});
+
+// Edit poll item
+app.get('/item/:id/edit', ensureLogin, function (req, res) {
+    var username = req.user.username;
+    Item.findOne({_id: req.params.id}, function (err, item) {
+        if (err || !item)
+            res.redirect('/poll/' + username);
+        else
+            res.render('edititem', { item: item });
+    });
+});
+
+app.post('/item/:id/edit', ensureLogin, function (req, res) {
+    var username = req.user.username;
+    Item.findOne({_id: req.params.id}, function (err, item) {
+        if (err || !item)
+            res.redirect('/poll/' + username);
+        else {
+            if (item.user != username)
+                res.redirect('/poll/' + username);
+            else {
+                item.title = req.body.title;
+                item.save();
+                res.redirect('/poll/' + username + '/' + item.poll);
+            }
+        }
+    });
+});
+
+// Vote item
+app.post('/item/:id/vote', function (req, res) {
+    var unique = req.user && req.user.username || req.ip;
+    Item.findOne({_id: req.params.id}, function (err, item) {
+        if (err || !item)
+            res.redirect('/poll/');
+        else {
+            var username = item.user;
+            // 1 poll only can be voted by 1 unique
+            Vote.count({unique: unique, poll: item.poll},
+                       function (err, count) {
+                if (!err && !count)
+                    Vote.create({unique: unique, poll: item.poll},
+                                function (err, vote) {
+                                    if (vote) {
+                                        item.vote += 1;
+                                        item.save();
+                                    }
+                });
+                res.redirect('/poll/' + username + '/' + item.poll);
+            });
+        }
+    });
+});
+
 
 // custom 404 page
 app.use(function(req, res, next){

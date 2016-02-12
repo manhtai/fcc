@@ -1,0 +1,11 @@
+if user
+    p Poll list of #{user.username}
+else
+    p All polls
+ul
+    each poll in polls
+        li
+            a(href="/poll/" + poll.user + "/" + poll.id) #{poll.title}
+
+
+a(href="/poll/new") new poll

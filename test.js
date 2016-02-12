@@ -1,6 +1,7 @@
 var request = require('supertest');
 var mongoose = require('mongoose');
 var User = require('./mongo').User;
+var Poll = require('./mongo').Poll;
 var assert = require('chai').assert;
 var config = require('./config');
 var bcrypt = require('bcrypt');
@@ -155,7 +156,6 @@ suite('Url shortener tests', function(){
 
 
 suite('Authentication tests', function(){
-    // Lengthen time out
     var server;
     setup(function (done) {
         delete require.cache[require.resolve('./index')];
@@ -288,34 +288,135 @@ suite('Authentication tests', function(){
         .expect('Location', '/signup', done);
     });
 
-    // Login tests
-    var baseUrl = '/login';
+    test('unauthenticated user can not access "/account"', function(done) {
+        var u = {
+            username: 'manhtai',
+            password: 'youguessit'
+        };
+        User.addUser(u);
+        var client = request.agent(server);
+        client
+        .get('/account')
+        .expect(302)
+        .end(function() {
+            // should redirect to "/login" if authentication fails'
+            var fu = _.clone(u);
+            fu.password = "foo";
+            client
+            .post('/login')
+            .send(fu)
+            .expect(302)
+            .expect('Location', '/login', done);
+        });
+    });
+
     test('should redirect to "/" if authentication succeeds', function (done) {
         var u = {
             username: 'manhtai',
             password: 'youguessit'
         };
         User.addUser(u);
-        request(server)
-        .post(baseUrl)
+        var new_client = request.agent(server);
+        new_client
+        .post('/login')
         .send(u)
         .expect(302)
-        .expect('Location', '/', done);
+        .expect('Location', '/')
+        .end(function() {
+            done();
+        });
     });
 
-    test('should redirect to "/login" if authentication fails', function (done) {
-        var u = {
+});
+
+
+suite('Poll tests', function() {
+    var server, u, app;
+    suiteSetup(function (done) {
+        delete require.cache[require.resolve('./index')];
+        app = require('./index');
+        server = request.agent(app);
+        u = {
             username: 'manhtai',
             password: 'youguessit'
         };
         User.addUser(u);
-        // Fake new password
-        var fu = _.clone(u);
-        fu.password = "fakepassword";
-        request(server)
-        .post(baseUrl)
-        .send(fu)
+
+        function clearDB() {
+            for (var i in mongoose.connection.collections) {
+            mongoose.connection.collections[i].remove();
+            }
+            return done();
+        }
+
+        function reconnect() {
+            mongoose.connect(config.db.test, function (err) {
+            if (err) {
+                throw err;
+            }
+            return clearDB();
+            });
+        }
+
+        function checkState() {
+            switch (mongoose.connection.readyState) {
+                case 0:
+                    reconnect();
+                    break;
+                case 1:
+                    clearDB();
+                    break;
+                default:
+                    process.nextTick(checkState);
+            }
+        }
+
+        checkState();
+    });
+
+    suiteTeardown(function (done) {
+        mongoose.disconnect();
+        app.close(done);
+    });
+
+    // CALLBACK HELL!!!
+    test('authenticated user can create polls and items', function (done) {
+        server
+        .post('/login')
+        .send(u)
         .expect(302)
-        .expect('Location', '/login', done);
+        .expect('Location', '/')
+        .end(function() {
+            var poll = {
+                title: "My 1st poll"
+            };
+            server
+            .post('/poll/new')
+            .send(poll)
+            .expect(200)
+            .end(function (err, res) {
+                Poll.find(function (err, polls) {
+                    if (polls) assert.equal(polls.length, 1);
+                    server
+                    .get('/poll/' + u.username + '/' + polls[0].id)
+                    .expect(200)
+                    .end(function () {
+                        var item = {
+                            title: "new item"
+                        };
+                        server
+                        .post('/poll/' + u.username + '/' + polls[0].id + '/add')
+                        .send(item)
+                        .expect(200)
+                        .end(function() {
+                            Poll.findOne({'title': poll.title}, function(err, poll) {
+                                assert.equal(poll.items[0].title, item.title);
+                                done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 });

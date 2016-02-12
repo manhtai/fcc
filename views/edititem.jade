@@ -1,0 +1,6 @@
+form(action="/item/" + item.id + "/edit", method="post")
+    div
+        label Item title:
+        input(type="text", name="title", value=item.title)
+    div
+        input(type="submit", value="Update")

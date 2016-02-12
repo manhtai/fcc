@@ -1,0 +1,16 @@
+p Title: #{poll.title}
+p Creator: 
+    a(href='/poll/' + poll.user) #{poll.user}
+    p Items: 
+        ul
+            if items
+                each item in items
+                    p #{item.title} : (#{item.vote} votes) 
+                        // Allow to edit item if you're owner
+                        if owner
+                            a(href='/item/' + item.id + '/edit') edit 
+                            | | 
+                        form(action='/item/' + item.id + '/vote', method="post")
+                            button vote!
+
+a(href='/poll/' + poll.user + '/' + poll.id + '/add') add item

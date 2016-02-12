@@ -70,4 +70,36 @@ userSchema.statics.addUser = function (user, fn) {
 
 var User = mongoose.model('User', userSchema);
 
-module.exports = {Url: Url, Search: Search, User: User};
+// Polls
+var itemSchema = mongoose.Schema({
+    title: String,
+    vote: { type: Number, default: 0 },
+    poll: String,
+    user: String
+});
+
+var Item = mongoose.model('Item', itemSchema);
+
+var voteSchema = mongoose.Schema({
+    poll: String,
+    unique: String
+});
+
+Vote = mongoose.model('Vote', voteSchema);
+
+var pollSchema = mongoose.Schema({
+    title: String,
+    user: String,
+    items: [itemSchema]
+});
+
+var Poll = mongoose.model('Poll', pollSchema);
+
+module.exports = {
+    Url: Url,
+    Search: Search,
+    User: User,
+    Item: Item,
+    Vote: Vote,
+    Poll: Poll
+};
