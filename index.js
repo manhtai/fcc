@@ -1,3 +1,4 @@
+var config = require('./config');
 var express = require('express');
 var strf = require('strftime');
 var parser = require('ua-parser-js');
@@ -5,17 +6,78 @@ var validUrl = require('valid-url');
 var randomstring = require('randomstring');
 var Url = require('./mongo').Url;
 var Search = require('./mongo').Search;
+var User = require('./mongo').User;
 var request = require('request');
 var multer  = require('multer');
 var upload = multer();
+var validator = require('validator');
+var cookie = require('cookie-parser');
+var bodyParser = require('body-parser');
+var passport = require('passport');
+var ensureLogin = require('connect-ensure-login').ensureLoggedIn();
+var Strategy = require('passport-local').Strategy;
+var log = require('morgan')('combined');
+
+var session_opts = {
+    secret: config.secret[process.env.NODE_ENV],
+    resave: false,
+    saveUninitialized: false
+};
+var session = require('express-session')(session_opts);
 
 var app = express();
+
+// Passport setting
+passport.serializeUser(function(user, cb) {
+    cb(null, user.id);
+});
+
+passport.deserializeUser(function(id, cb) {
+    User.findOne({_id: id}, function (err, user) {
+        if (err) { return cb(err); }
+        cb(null, user);
+    });
+});
+
+passport.use(new Strategy(
+    function(username, password, cb) {
+        User.findOne({username: username}, function(err, user) {
+            if (err) { return cb(err); }
+            if (!user) { return cb(null, false); }
+            User.comparePasswordAndHash(password,
+                                        user.password,
+                                        function(err, valid) {
+                if (err) { return cb(err); }
+                if (!valid) {
+                    return cb(null, false, { message: 'Invalid password.' });
+                }
+                return cb(err, user);
+            });
+        });
+}));
+
+
+// View engine
+app.set('views', __dirname + '/views');
+app.set('view engine', 'jade');
+
+// Middlewares
+app.use(log);
+app.use(cookie());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(session);
+
+// Initialize Passport and restore authentication state, if any, from the session
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Set port
 app.set('port', process.env.PORT || 3000);
 
 // Homepage
 app.get('/', function(req, res){
-    res.type('text/plain');
-    res.send('Please visit https://github.com/manhtai/fcc for more information.');
+    res.render('home', { user: req.user });
 });
 
 // Timestamp Microservice
@@ -178,6 +240,55 @@ app.post('/file/upload/', upload.single('file'), function (req, res, next){
     res.send(JSON.stringify(result));
 });
 
+
+// User model
+app.get('/signup', function(req, res) {
+    if (req.user) res.redirect('/');
+    else res.render('signup');
+});
+
+app.post('/signup', function(req, res){
+    if (req.body.username && validator.isAlphanumeric(req.body.username)) {
+        User.hashPassword(req.body.password, function (err, passwordHash) {
+            // We only allow username and password when creating account
+            var newUser = {
+                username: req.body.username,
+                password: passwordHash,
+            };
+            // Create new user
+            User.create(newUser, function (err, user) {
+                if (!err) {
+                    // Log in immediatetly
+                    req.logIn(user, function (err) {
+                        if (err) { return fn(err); }
+                        return res.redirect('/account');
+                    });
+                }
+                else res.redirect('/signup');
+            });
+        });
+    }
+});
+
+app.get('/login', function(req, res) {
+    if (req.user) res.redirect('/');
+    else res.render('login');
+});
+
+app.post('/login',
+    passport.authenticate('local', { successRedirect: '/',
+                                     failureRedirect: '/login'})
+);
+
+app.get('/account', ensureLogin, function(req, res){
+    res.render('account', { user: req.user });
+});
+
+app.get('/logout', function(req, res) {
+    req.logout();
+    res.redirect('/');
+});
+
 // custom 404 page
 app.use(function(req, res, next){
     res.type('text/plain');
@@ -194,8 +305,7 @@ app.use(function(err, req, res, next){
 });
 
 var server = app.listen(app.get('port'), function(){
-    console.log( 'Express started on http://localhost:' +
-    app.get('port') + '; press Ctrl-C to terminate.' );
+    console.log('Express started on http://localhost:' + app.get('port'));
 });
 
 module.exports = server;

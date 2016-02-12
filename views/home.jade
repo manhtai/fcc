@@ -1,0 +1,14 @@
+if !user
+    p Welcome!
+    p Please visit 
+        a(href="https://github.com/manhtai/fcc") https://github.com/manhtai/fcc
+        |  for more information
+    p Or 
+        a(href="/login") log in
+        |  / 
+        a(href="/signup") sign up
+else
+    p Hello, #{user.username}. View your 
+        a(href="/account") account
+    p
+        a(href="/logout") log out
