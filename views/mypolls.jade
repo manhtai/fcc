@@ -1,0 +1,11 @@
+extends ./layout.jade
+block item
+    h1 Poll list of #{user.username}
+    p Visit home page for more polls.
+
+    div(class="list-group")
+        each poll in polls
+            - var href= "/poll/" + poll.user + "/" + poll.id
+            a(class="list-group-item", href=href) #{poll.title}
+
+    a(class="btn btn-primary", href="/poll/new") new poll

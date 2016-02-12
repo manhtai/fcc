@@ -1,11 +1,13 @@
-if user
-    p Poll list of #{user.username}
-else
-    p All polls
-ul
-    each poll in polls
-        li
-            a(href="/poll/" + poll.user + "/" + poll.id) #{poll.title}
+extends ./layout.jade
+block item
+    div(class="jumbotron text-center")
+        div(class="container")
+            h1 All polls
+            p Here are all the polls we have, vote for them, or create more.
 
+            div(class="list-group")
+                each poll in polls
+                    - var href= "/poll/" + poll.user + "/" + poll.id
+                    a(class="list-group-item", href=href) #{poll.title}
 
-a(href="/poll/new") new poll
+            a(class="btn btn-primary btn-lg", href="/poll/new") new poll

@@ -1,14 +1,15 @@
-if !user
-    p Welcome!
-    p Please visit 
-        a(href="https://github.com/manhtai/fcc") https://github.com/manhtai/fcc
-        |  for more information
-    p Or 
-        a(href="/login") log in
-        |  / 
-        a(href="/signup") sign up
-else
-    p Hello, #{user.username}. View your 
-        a(href="/account") account
-    p
-        a(href="/logout") log out
+extends ./layout.jade
+block content
+    div(class="jumbotron text-center")
+        div(class="container")
+            if !user
+                h1 Welcome!
+                p Please visit 
+                    a(href="https://github.com/manhtai/fcc") https://github.com/manhtai/fcc
+                    |  for more information.
+            else
+                h1 Hello, 
+                    b #{user.username}!
+                p View your 
+                    a(href="/account") account
+                    | .

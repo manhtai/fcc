@@ -1,6 +1,8 @@
-form(action="/poll/new", method="post")
-    div
-        label Poll title:
-        input(type="text", name="title")
-    div
-        input(type="submit", value="create")
+extends ./layout.jade
+block form
+    form(action="/poll/new", method="post")
+        div(class="form-group")
+            label Poll title
+            input(type="text", name="title", class="form-control")
+        div(class="form-group")
+            button(type="submit", class="btn btn-default") Create

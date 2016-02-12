@@ -301,14 +301,14 @@ app.get('/logout', function(req, res) {
 // All polls
 app.get('/poll', function (req, res) {
     Poll.find(function (err, polls) {
-        res.render('polls', { polls: polls });
+        res.render('polls', { polls: polls, user: req.user });
     });
 });
 
 
 // Create poll
 app.get('/poll/new', ensureLogin, function (req, res) {
-    res.render('newpoll');
+    res.render('newpoll', { user: req.user });
 });
 
 app.post('/poll/new', ensureLogin, function (req, res) {
@@ -317,7 +317,7 @@ app.post('/poll/new', ensureLogin, function (req, res) {
         user: req.user.username
     };
     Poll.create(newPoll, function (err, poll) {
-        if (err) res.render('newpoll');
+        if (err) res.render('newpoll', {user: req.user});
         else res.redirect('/poll/' + poll.id);
     });
 });
@@ -328,7 +328,7 @@ app.get('/poll/:username', function (req, res) {
         if (err || !user) res.redirect('/poll');
         else Poll.find({"user": user.username}, function (err, polls) {
             if (err || !polls) res.redirect('/poll');
-            else res.render('polls', { polls: polls, user: user });
+            else res.render('mypolls', { polls: polls, user: user });
         });
     });
 });
@@ -344,7 +344,7 @@ app.get('/poll/:username/:id', function (req, res) {
             else Item.find({poll : poll.id},
                             function (err, items) {
                 res.render('poll',
-                            { poll: poll, items: items, owner: owner });
+                            { poll: poll, items: items, owner: owner, user: req.user });
             });
         });
     });
@@ -374,7 +374,7 @@ app.get('/poll/:username/:id/add', ensureLogin, function (req, res) {
                       function (err, poll) {
                             if (err || !poll)
                                 res.redirect('/poll/' + username);
-                            else res.render('newitem', { poll: poll });
+                            else res.render('newitem', { poll: poll, user: req.user });
                       });
 });
 
@@ -406,7 +406,7 @@ app.get('/item/:id/edit', ensureLogin, function (req, res) {
         if (err || !item)
             res.redirect('/poll/' + username);
         else
-            res.render('edititem', { item: item });
+            res.render('edititem', { item: item, user: req.user });
     });
 });
 

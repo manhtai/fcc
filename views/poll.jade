@@ -1,16 +1,22 @@
-p Title: #{poll.title}
-p Creator: 
-    a(href='/poll/' + poll.user) #{poll.user}
-    p Items: 
-        ul
-            if items
-                each item in items
-                    p #{item.title} : (#{item.vote} votes) 
-                        // Allow to edit item if you're owner
-                        if owner
-                            a(href='/item/' + item.id + '/edit') edit 
-                            | | 
-                        form(action='/item/' + item.id + '/vote', method="post")
-                            button vote!
+extends ./layout.jade
+block poll
+    div.page-header
+        h1 #{poll.title}
+    h2 by: 
+        a(href='/poll/' + poll.user) #{poll.user}
 
-a(href='/poll/' + poll.user + '/' + poll.id + '/add') add item
+    if items
+        div(class="list-group")
+            each item in items
+                form(action='/item/' + item.id + '/vote', method="post")
+                    if owner
+                        a(href='/item/' + item.id + '/edit')
+                            span(class="glyphicon glyphicon-pencil" aria-hidden="true")
+                    - var but = "list-group-item btn-lg"
+                    button(class=but) #{item.title}
+                        span(class="badge") #{item.vote} votes
+
+    -var add = '/poll/' + poll.user + '/' + poll.id + '/add'
+    a(class="btn btn-primary", href=add) add item
+
+block chart

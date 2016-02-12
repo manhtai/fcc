@@ -1,9 +1,11 @@
-form(action="/signup", method="post")
-    div
-        label Username:
-        input(type="text", name="username")
-    div
-        label Password:
-        input(type="password", name="password")
-    div
-        input(type="submit", value="Signup")
+extends ./layout.jade
+block form
+    form(action="/signup", method="post")
+        div(class="form-group")
+            label Username
+            input(type="text", name="username", class="form-control")
+        div(class="form-group")
+            label Password
+            input(type="password", name="password", class="form-control")
+        div(class="form-group")
+            button(type="submit", class="btn btn-default") Sign up
