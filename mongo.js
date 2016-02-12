@@ -39,15 +39,9 @@ var searchSchema = mongoose.Schema({
 var Search = mongoose.model('Search', searchSchema);
 
 // User model
-var emailSchema = mongoose.Schema({
-    email: { type: String, index: { unique: true }},
-    valid: Boolean
-});
-
 var userSchema = mongoose.Schema({
     username: { type: String, index: { unique: true }},
-    password: String,
-    emails: [emailSchema]
+    password: String
 });
 
 // Hashpass using Bcrypt

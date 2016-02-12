@@ -204,13 +204,11 @@ suite('Authentication tests', function(){
         var u = {
             username: 'manhtai',
             password: 'youguessit',
-            emails: [{email: 'mail@manhtai.com', valid: true}]
         };
         User.addUser(u, function (err, createdUser) {
             assert.isNull(err);
             assert.equal(createdUser.username, 'manhtai');
             assert.notEqual(createdUser.password, 'youguessit'); // Because of hashing
-            assert.equal(createdUser.emails[0].email, 'mail@manhtai.com');
             done();
         });
     });

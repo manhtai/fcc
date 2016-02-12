@@ -250,24 +250,26 @@ app.get('/signup', function(req, res) {
 app.post('/signup', function(req, res){
     if (req.body.username && validator.isAlphanumeric(req.body.username)) {
         User.hashPassword(req.body.password, function (err, passwordHash) {
+            if (err) res.redirect('/signup');
             // We only allow username and password when creating account
             var newUser = {
                 username: req.body.username,
-                password: passwordHash,
+                password: passwordHash
             };
             // Create new user
             User.create(newUser, function (err, user) {
                 if (!err) {
                     // Log in immediatetly
                     req.logIn(user, function (err) {
-                        if (err) { return fn(err); }
-                        return res.redirect('/account');
+                        if (err) res.redirect('/signup');
+                        else return res.redirect('/account');
                     });
                 }
                 else res.redirect('/signup');
             });
         });
     }
+    else res.redirect('/signup');
 });
 
 app.get('/login', function(req, res) {
