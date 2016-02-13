@@ -305,7 +305,6 @@ app.get('/poll', function (req, res) {
     });
 });
 
-
 // Create poll
 app.get('/poll/new', ensureLogin, function (req, res) {
     res.render('newpoll', { user: req.user });
@@ -350,8 +349,23 @@ app.get('/poll/:username/:id', function (req, res) {
     });
 });
 
-// Update poll title
-app.post('/poll/:username/:id', ensureLogin, function (req, res) {
+// Edit poll
+app.get('/poll/:username/:id/edit', ensureLogin, function (req, res) {
+    var username = req.params.username;
+    if (username != req.params.username) res.redirect('/poll/' + username);
+    else Poll.findOne({_id: req.params.id},
+                      function (err, poll) {
+                        if (err || !poll)
+                            res.redirect('/poll/' + username);
+                        else Item.find({poll : poll.id},
+                                        function (err, items) {
+                            res.render('editpoll',
+                                       { poll: poll, items: items, user: req.user });
+                        });
+    });
+});
+
+app.post('/poll/:username/:id/edit', ensureLogin, function (req, res) {
     var username = req.params.username;
     if (username != req.params.username) res.redirect('/poll/' + username);
     else Poll.findOne({_id: req.params.id},
@@ -361,6 +375,15 @@ app.post('/poll/:username/:id', ensureLogin, function (req, res) {
                         else {
                             poll.title = req.body.title;
                             poll.save();
+                            Item.find({poll : poll.id},
+                                      function (err, items) {
+                                          items.forEach(function (item) {
+                                              item.title = req.body[item.id] ?
+                                                  req.body[item.id]
+                                                  : item.title;
+                                              item.save();
+                                          });
+                                      });
                             res.redirect('/poll/' + username + '/' + poll.id);
                         }
     });
@@ -399,34 +422,6 @@ app.post('/poll/:username/:id/add', ensureLogin, function (req, res) {
     });
 });
 
-// Edit poll item
-app.get('/item/:id/edit', ensureLogin, function (req, res) {
-    var username = req.user.username;
-    Item.findOne({_id: req.params.id}, function (err, item) {
-        if (err || !item)
-            res.redirect('/poll/' + username);
-        else
-            res.render('edititem', { item: item, user: req.user });
-    });
-});
-
-app.post('/item/:id/edit', ensureLogin, function (req, res) {
-    var username = req.user.username;
-    Item.findOne({_id: req.params.id}, function (err, item) {
-        if (err || !item)
-            res.redirect('/poll/' + username);
-        else {
-            if (item.user != username)
-                res.redirect('/poll/' + username);
-            else {
-                item.title = req.body.title;
-                item.save();
-                res.redirect('/poll/' + username + '/' + item.poll);
-            }
-        }
-    });
-});
-
 // Vote item
 app.post('/item/:id/vote', function (req, res) {
     var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -440,7 +435,7 @@ app.post('/item/:id/vote', function (req, res) {
             Vote.count({unique: unique, poll: item.poll},
                        function (err, count) {
                 if (!err && !count)
-                    Vote.create({unique: unique, poll: item.poll},
+                    Vote.create({unique: unique, poll: item.poll, item: item.id},
                                 function (err, vote) {
                                     if (vote) {
                                         item.vote += 1;

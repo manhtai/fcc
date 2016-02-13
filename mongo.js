@@ -82,6 +82,7 @@ var Item = mongoose.model('Item', itemSchema);
 
 var voteSchema = mongoose.Schema({
     poll: String,
+    item: String,
     unique: String
 });
 

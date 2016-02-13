@@ -5,6 +5,7 @@ block item
 
     div(class="list-group")
         each poll in polls
+            br
             - var href= "/poll/" + poll.user + "/" + poll.id
             a(class="list-group-item", href=href) #{poll.title}
 

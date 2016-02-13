@@ -1,0 +1,18 @@
+extends ./layout.jade
+block form
+    - var edit= "/poll/" + poll.user + "/" + poll.id + "/edit"
+    form(action=edit, method="post")
+        div(class="form-group")
+            label Poll
+            input(type="text", name="title", value=poll.title, class="form-control")
+        if items
+            label Items
+            each item in items
+                div(class="form-group")
+                    div(class="input-group")
+                        input(type="text", name=item.id, value=item.title, class="form-control")
+                        div(class="input-group-addon")
+                            span(class="glyphicon glyphicon-trash")
+
+        div(class="form-group")
+            button(type="submit", class="btn btn-default") Save
