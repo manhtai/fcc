@@ -335,15 +335,21 @@ app.get('/poll/:username', function (req, res) {
 // A poll
 app.get('/poll/:username/:id', function (req, res) {
     var username = req.params.username;
-    var owner = req.user && username == req.user.username;
     User.findOne({username: username}, function (err, user) {
         if (err || !user) res.redirect('/poll');
         else Poll.findOne({_id: req.params.id}, function (err, poll) {
             if (err || !poll) res.redirect('/poll/' + user.username);
             else Item.find({poll : poll.id},
                             function (err, items) {
+                var data = []; // For the chart
+                var randomColor = function () { 
+                    return '#' + (Math.random().toString(16) + '0000000').slice(2, 8); 
+                };
+                items.forEach(function (i) {
+                    data.push({ value: i.vote, label: i.title, color: randomColor() });
+                });
                 res.render('poll',
-                            { poll: poll, items: items, owner: owner, user: req.user });
+                           { poll: poll, items: items, user: req.user, data: data });
             });
         });
     });

@@ -1,18 +1,18 @@
 extends ./layout.jade
 block poll
     div.page-header
-        h1 #{poll.title}
+        h2 #{poll.title}
 
     if items
         div(class="list-group")
             each item in items
                 form(action='/item/' + item.id + '/vote', method="post")
-                    - var but = "list-group-item btn-lg"
+                    - var but = "list-group-item btn-md"
                     br
                     button(class=but) #{item.title}
                         span(class="badge") #{item.vote}
 
-    if owner
+    if user && poll.user == user.username
         br
         - var edit = '/poll/' + poll.user + '/' + poll.id + '/edit'
         a(class="btn btn-primary", href=edit) edit poll
@@ -21,3 +21,10 @@ block poll
         a(class="btn btn-danger", href=del) delete poll
 
 block chart
+    canvas(id="myChart", width="300", height="300")
+    div(id="legendDiv", class="chart-legend")
+    script(type="text/javascript").
+        var data = !{JSON.stringify(data)};
+        var ctx = document.getElementById("myChart").getContext("2d");
+        var myNewChart = new Chart(ctx).Doughnut(data);
+        document.getElementById("legendDiv").innerHTML = myNewChart.generateLegend();

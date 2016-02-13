@@ -387,14 +387,14 @@ suite('Poll tests', function() {
         .expect(302)
         .expect('Location', '/')
         .end(function() {
-            var poll = {
+            var mypoll = {
                 title: "My 1st poll"
             };
             server
             .post('/poll/new')
-            .send(poll)
+            .send(mypoll)
             .expect(200)
-            .end(function (err, res) {
+            .end(function () {
                 Poll.find(function (err, polls) {
                     if (polls) assert.equal(polls.length, 1);
                     server
@@ -409,7 +409,7 @@ suite('Poll tests', function() {
                         .send(item)
                         .expect(200)
                         .end(function() {
-                            Poll.findOne({'title': poll.title}, function(err, poll) {
+                            Poll.findOne({title: mypoll.title}, function(err, poll) {
                                 assert.equal(poll.items[0].title, item.title);
                                 done();
                             });
