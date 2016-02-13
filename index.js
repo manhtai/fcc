@@ -317,7 +317,7 @@ app.post('/poll/new', ensureLogin, function (req, res) {
     };
     Poll.create(newPoll, function (err, poll) {
         if (err) res.render('newpoll', {user: req.user});
-        else res.redirect('/poll/' + poll.id);
+        else res.redirect('/poll/' + poll.user + '/' + poll.id);
     });
 });
 
@@ -389,6 +389,35 @@ app.post('/poll/:username/:id/edit', ensureLogin, function (req, res) {
     });
 });
 
+// FIXME: Delete poll using GET
+app.get('/poll/:username/:id/delete', ensureLogin, function (req, res) {
+    var username = req.params.username;
+    if (username != req.params.username) res.redirect('/poll/' + username);
+    else {
+        Poll.findOne({_id: req.params.id}, function (err, poll) {
+            if (err || !poll || poll.user != username)
+                res.redirect('/poll' + username);
+            else Item.find({poll: poll.id}).remove(function (err) {
+                    Poll.findOne({_id: req.params.id}).remove(function (err) {
+                        res.redirect('/poll/' + username);
+                    });
+                });
+        });
+    }
+});
+
+// FIXME: Delete item using GET
+app.get('/item/:id/delete', ensureLogin, function (req, res) {
+    var username = req.user.username;
+    Item.findOne({_id: req.params.id}, function (err, item) {
+        if (err || !item || item.user != username)
+            res.redirect('/poll/' + username);
+        else Item.findOne({_id: req.params.id}).remove(function (err) {
+            res.redirect('/poll/' + username + '/' + item.poll + '/edit');
+        });
+    });
+});
+
 // Add new poll item
 app.get('/poll/:username/:id/add', ensureLogin, function (req, res) {
     var username = req.params.username;
@@ -417,7 +446,7 @@ app.post('/poll/:username/:id/add', ensureLogin, function (req, res) {
                     else poll.items = [item];
                     poll.save();
                 }
-                res.redirect('/poll/' + username + '/' + poll.id);
+                res.redirect('/poll/' + username + '/' + poll.id + '/edit');
             });
     });
 });

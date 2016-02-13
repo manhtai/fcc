@@ -12,7 +12,14 @@ block form
                     div(class="input-group")
                         input(type="text", name=item.id, value=item.title, class="form-control")
                         div(class="input-group-addon")
-                            span(class="glyphicon glyphicon-trash")
+                            - var del = '/item/' + item.id + '/delete'
+                            a(href=del)
+                                span(class="glyphicon glyphicon-trash")
+
+            div(class="form-group text-right")
+                - var add = '/poll/' + poll.user + '/' + poll.id + '/add'
+                a(class="btn btn-default", href=add)
+                    span(class="glyphicon glyphicon-plus")
 
         div(class="form-group")
-            button(type="submit", class="btn btn-default") Save
+            button(type="submit", class="btn btn-primary") Save

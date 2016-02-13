@@ -14,10 +14,10 @@ block poll
 
     if owner
         br
-        - var add = '/poll/' + poll.user + '/' + poll.id + '/add'
-        a(class="btn btn-primary", href=add) add item
         - var edit = '/poll/' + poll.user + '/' + poll.id + '/edit'
+        a(class="btn btn-primary", href=edit) edit poll
         |  
-        a(class="btn btn-danger", href=edit) edit poll
+        - var del = '/poll/' + poll.user + '/' + poll.id + '/delete'
+        a(class="btn btn-danger", href=del) delete poll
 
 block chart
